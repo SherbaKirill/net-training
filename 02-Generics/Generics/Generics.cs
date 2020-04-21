@@ -23,8 +23,10 @@ namespace Task.Generics {
 		///   { new TimeSpan(1, 0, 0), new TimeSpan(0, 0, 30) } => "01:00:00,00:00:30",
 		/// </example>
 		public static string ConvertToString<T>(this IEnumerable<T> list) {
-			// TODO : Implement ConvertToString<T>
-			throw new NotImplementedException();
+			string resultString = "";
+			foreach (var subject in list)
+				resultString += subject.ToString() + ListSeparator;
+			return resultString.Remove(resultString.Length - 1);
 		}
 
 		/// <summary>
@@ -43,10 +45,13 @@ namespace Task.Generics {
 		///  "Black,Blue,Cyan" for ConsoleColor => { ConsoleColor.Black, ConsoleColor.Blue, ConsoleColor.Cyan }
 		///  "1:00:00,0:00:30" for TimeSpan =>  { new TimeSpan(1, 0, 0), new TimeSpan(0, 0, 30) },
 		///  </example>
-		public static IEnumerable<T> ConvertToList<T>(this string list) {
-			// TODO : Implement ConvertToList<T>
-			// HINT : Use TypeConverter.ConvertFromString method to parse string value
-			throw new NotImplementedException();
+		public static IEnumerable<T> ConvertToList<T>(this string list) { 
+			string[] array = list.Split(ListSeparator);
+			T[] resultArray = new T[array.Length];
+			for(int i=0;i<array.Length;i++)
+				resultArray[i]=(T)System.ComponentModel.TypeDescriptor.GetConverter(typeof(T)).ConvertFromString(array[i]);
+			return resultArray;
+
 		}
 
 	}
@@ -61,8 +66,10 @@ namespace Task.Generics {
 		/// <param name="index1">first index</param>
 		/// <param name="index2">second index</param>
 		public static void SwapArrayElements<T>(this T[] array, int index1, int index2) {
-			// TODO : Implement SwapArrayElements<T>
-			throw new NotImplementedException();
+			T a;
+			a = array[index1];
+			array[index1] = array[index2];
+			array[index2] = a;
 		}
 
 		/// <summary>
@@ -91,9 +98,72 @@ namespace Task.Generics {
 		///     { 1, "a", false },
 		///   }
 		/// </example>
-		public static void SortTupleArray<T1, T2, T3>(this Tuple<T1, T2, T3>[] array, int sortedColumn, bool ascending) {
+		public static void SortTupleArray<T1, T2, T3>(this Tuple<T1, T2, T3>[] array, int sortedColumn, bool ascending) 
+				where T1: IComparable
+				where T2:IComparable
+				where T3:IComparable
+		{
 			// TODO :SortTupleArray<T1, T2, T3>
 			// HINT : Add required constraints to generic types
+			bool swap = false;
+
+			if (sortedColumn >= 0 && sortedColumn <=2)
+			{
+				for (int i = 0; i < array.Length; i++)
+					for (int j = 0; j < array.Length; j++)
+					{
+						switch (sortedColumn)
+						{
+							case 0:
+								switch (ascending)
+								{
+									case true:
+										if (array[i].Item1.CompareTo(array[j].Item1) < 0)
+											swap = true;
+										break;
+									case false:
+										if (array[i].Item1.CompareTo(array[j].Item1) > 0)
+											swap = true;
+										break;
+								}
+								break;
+							case 1:
+								switch (ascending)
+								{
+									case true:
+										if (array[i].Item2.CompareTo(array[j].Item2) < 0)
+											swap = true;
+										break;
+									case false:
+										if (array[i].Item2.CompareTo(array[j].Item2) > 0)
+											swap = true;
+										break;
+								}
+								break;
+							case 2:
+								switch (ascending)
+								{
+									case true:
+										if (array[i].Item3.CompareTo(array[j].Item3) < 0)
+											swap = true;
+										break;
+									case false:
+										if (array[i].Item3.CompareTo(array[j].Item3) > 0)
+											swap = true;
+										break;
+								}
+								break;
+						}
+						if (swap)
+						{
+							SwapArrayElements(array, i, j);
+							swap = false;
+						}
+					}
+			}
+			else throw new IndexOutOfRangeException();
+
+						
 		}
 
 	}
@@ -107,9 +177,16 @@ namespace Task.Generics {
 	/// </example>
 	public static class Singleton<T> {
 		// TODO : Implement generic singleton class 
-
+		private static object _instanse;
+		private static object _sync = new Object();
 		public static T Instance {
-			get { throw new NotImplementedException(); }
+			get {
+				if (_instanse == null)
+					lock(_sync)
+						if(_instanse==null)
+							_instanse = Activator.CreateInstance(typeof(T));
+				return (T)_instanse;
+				}
 		}
 	}
 

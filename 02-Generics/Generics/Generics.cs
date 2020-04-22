@@ -212,8 +212,22 @@ namespace Task.Generics {
 		///   If the third attemp fails then this exception should be rethrow to the application.
 		/// </example>
 		public static T TimeoutSafeInvoke<T>(this Func<T> function) {
-			// TODO : Implement TimeoutSafeInvoke<T>
-			throw new NotImplementedException();
+			int attempt = 0;
+			while (attempt++ < 3)
+			{
+				try
+				{
+					return function.Invoke();
+				}
+				catch (System.Net.WebException)
+				{
+					if (attempt < 2)
+					{
+						System.Diagnostics.Trace.TraceInformation("System.Net.WebException");
+					}
+				}
+			}
+			throw new System.Net.WebException();
 		}
 
 
@@ -241,8 +255,17 @@ namespace Task.Generics {
 		///       })
 		/// </example>
 		public static Predicate<T> CombinePredicates<T>(Predicate<T>[] predicates) {
-			// TODO : Implement CombinePredicates<T>
-			throw new NotImplementedException();
+			return delegate (T result)
+			{
+				foreach (Predicate<T> predicate in predicates)
+				{
+					if (!predicate(result))
+					{
+						return false;
+					}
+				}
+				return true;
+			};
 		}
 
 	}

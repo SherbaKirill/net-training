@@ -22,12 +22,8 @@ namespace Task.Generics {
 		///   { ConsoleColor.Black, ConsoleColor.Blue, ConsoleColor.Cyan } => "Black,Blue,Cyan"
 		///   { new TimeSpan(1, 0, 0), new TimeSpan(0, 0, 30) } => "01:00:00,00:00:30",
 		/// </example>
-		public static string ConvertToString<T>(this IEnumerable<T> list) {
-			string resultString = "";
-			foreach (var subject in list)
-				resultString += subject.ToString() + ListSeparator;
-			return resultString.Remove(resultString.Length - 1);
-		}
+		public static string ConvertToString<T>(this IEnumerable<T> list)=> String.Join<T>(ListSeparator.ToString(), list);
+		
 
 		/// <summary>
 		///   Converts the string respresentation to the list of items
@@ -45,13 +41,9 @@ namespace Task.Generics {
 		///  "Black,Blue,Cyan" for ConsoleColor => { ConsoleColor.Black, ConsoleColor.Blue, ConsoleColor.Cyan }
 		///  "1:00:00,0:00:30" for TimeSpan =>  { new TimeSpan(1, 0, 0), new TimeSpan(0, 0, 30) },
 		///  </example>
-		public static IEnumerable<T> ConvertToList<T>(this string list) { 
-			string[] array = list.Split(ListSeparator);
-			T[] resultArray = new T[array.Length];
-			for(int i=0;i<array.Length;i++)
-				resultArray[i]=(T)System.ComponentModel.TypeDescriptor.GetConverter(typeof(T)).ConvertFromString(array[i]);
-			return resultArray;
-
+		public static IEnumerable<T> ConvertToList<T>(this string list) {
+			foreach(string subject in list.Split(ListSeparator))
+				yield return (T)System.ComponentModel.TypeDescriptor.GetConverter(typeof(T)).ConvertFromString(subject);
 		}
 
 	}
@@ -66,8 +58,7 @@ namespace Task.Generics {
 		/// <param name="index1">first index</param>
 		/// <param name="index2">second index</param>
 		public static void SwapArrayElements<T>(this T[] array, int index1, int index2) {
-			T a;
-			a = array[index1];
+			T a = array[index1];
 			array[index1] = array[index2];
 			array[index2] = a;
 		}
@@ -98,75 +89,31 @@ namespace Task.Generics {
 		///     { 1, "a", false },
 		///   }
 		/// </example>
-		public static void SortTupleArray<T1, T2, T3>(this Tuple<T1, T2, T3>[] array, int sortedColumn, bool ascending) 
-				where T1: IComparable
-				where T2:IComparable
-				where T3:IComparable
+		public static void SortTupleArray<T1, T2, T3>(this Tuple<T1, T2, T3>[] array, int sortedColumn, bool ascending)
+				where T1 : IComparable
+				where T2 : IComparable
+				where T3 : IComparable
 		{
-			// TODO :SortTupleArray<T1, T2, T3>
-			// HINT : Add required constraints to generic types
-			bool swap = false;
-
-			if (sortedColumn >= 0 && sortedColumn <=2)
+			switch (sortedColumn)
 			{
-				for (int i = 0; i < array.Length; i++)
-					for (int j = 0; j < array.Length; j++)
-					{
-						switch (sortedColumn)
-						{
-							case 0:
-								switch (ascending)
-								{
-									case true:
-										if (array[i].Item1.CompareTo(array[j].Item1) < 0)
-											swap = true;
-										break;
-									case false:
-										if (array[i].Item1.CompareTo(array[j].Item1) > 0)
-											swap = true;
-										break;
-								}
-								break;
-							case 1:
-								switch (ascending)
-								{
-									case true:
-										if (array[i].Item2.CompareTo(array[j].Item2) < 0)
-											swap = true;
-										break;
-									case false:
-										if (array[i].Item2.CompareTo(array[j].Item2) > 0)
-											swap = true;
-										break;
-								}
-								break;
-							case 2:
-								switch (ascending)
-								{
-									case true:
-										if (array[i].Item3.CompareTo(array[j].Item3) < 0)
-											swap = true;
-										break;
-									case false:
-										if (array[i].Item3.CompareTo(array[j].Item3) > 0)
-											swap = true;
-										break;
-								}
-								break;
-						}
-						if (swap)
-						{
-							SwapArrayElements(array, i, j);
-							swap = false;
-						}
-					}
+				case 0:
+					Array.Sort(array, (x, y) => x.Item1.CompareTo(y.Item1));
+					break;
+				case 1: 
+					Array.Sort(array, (x, y) => x.Item2.CompareTo(y.Item2));
+					break;
+				case 2:
+					Array.Sort(array, (x, y) => x.Item3.CompareTo(y.Item3));
+					break;
+				default:
+					throw new IndexOutOfRangeException();
 			}
-			else throw new IndexOutOfRangeException();
-
-						
+			
+			if (!ascending)
+				Array.Reverse(array);
+			
 		}
-
-	}
+    }
 
 	/// <summary>
 	///   Generic singleton class
@@ -175,18 +122,14 @@ namespace Task.Generics {
 	///   This code should return the same MyService object every time:
 	///   MyService singleton = Singleton<MyService>.Instance;
 	/// </example>
-	public static class Singleton<T> {
-		// TODO : Implement generic singleton class 
-		private static object _instanse;
-		private static object _sync = new Object();
+	public static class Singleton<T> where T : class, new()
+	{
+		private static readonly Lazy<T> instance = new Lazy<T>(() => new T());
 		public static T Instance {
-			get {
-				if (_instanse == null)
-					lock(_sync)
-						if(_instanse==null)
-							_instanse = Activator.CreateInstance(typeof(T));
-				return (T)_instanse;
-				}
+			get 
+			{
+				return instance.Value;
+			}
 		}
 	}
 

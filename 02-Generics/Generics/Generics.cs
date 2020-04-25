@@ -88,30 +88,22 @@ namespace Task.Generics {
 		///     { 3, "b", false }
 		///     { 1, "a", false },
 		///   }
-		/// </example>
+		/// </example> 
+		delegate int Compare<T>(T item1, T item2);
 		public static void SortTupleArray<T1, T2, T3>(this Tuple<T1, T2, T3>[] array, int sortedColumn, bool ascending)
 				where T1 : IComparable
 				where T2 : IComparable
 				where T3 : IComparable
 		{
-			switch (sortedColumn)
-			{
-				case 0:
-					Array.Sort(array, (x, y) => x.Item1.CompareTo(y.Item1));
-					break;
-				case 1: 
-					Array.Sort(array, (x, y) => x.Item2.CompareTo(y.Item2));
-					break;
-				case 2:
-					Array.Sort(array, (x, y) => x.Item3.CompareTo(y.Item3));
-					break;
-				default:
-					throw new IndexOutOfRangeException();
-			}
-			
+			if (sortedColumn > 2)
+				throw new IndexOutOfRangeException();
+			Compare<Tuple<T1, T2, T3>>[] compare = new Compare<Tuple<T1, T2, T3>>[] {
+				delegate (Tuple<T1, T2, T3> tuple1, Tuple<T1, T2, T3> tuple2) { return tuple1.Item1.CompareTo(tuple2.Item1); },
+				delegate (Tuple<T1, T2, T3> tuple1, Tuple<T1, T2, T3> tuple2) { return tuple1.Item2.CompareTo(tuple2.Item2); },
+				delegate (Tuple<T1, T2, T3> tuple1, Tuple<T1, T2, T3> tuple2) { return tuple1.Item3.CompareTo(tuple2.Item3); } };
+			Array.Sort(array,(x,y)=>compare[sortedColumn].Invoke(x,y));
 			if (!ascending)
-				Array.Reverse(array);
-			
+				Array.Reverse(array);			
 		}
     }
 

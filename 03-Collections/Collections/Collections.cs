@@ -30,19 +30,23 @@ namespace Collections.Tasks {
         ///   12 => { 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144 }
         /// </example>
         public static IEnumerable<int> GetFibonacciSequence(int count) {
-            if (count >= 0)
-            {
-                List<int> result = new List<int>();
-                for (int item = 0; item < count; item++)
-                    if (item == 0)
-                        result.Add(1);
-                    else if (item == 1)
-                        result.Add(1);
-                    else
-                        result.Add(result[item - 2] + result[item - 1]);
-                return result;
+            if (count < 0)
+                throw new ArgumentException();
+            int first = 1;
+            int second = 1;
+            for (int item = 0; item < count; item++)
+            {                
+                if (item <= 1)
+                    yield return 1;
+                else
+                {
+                    int result = first + second;
+                    second = first;
+                    first = result;
+                    yield return result;                   
+                }
             }
-            else throw new ArgumentException();
+                            
         }
 
         /// <summary>
@@ -57,19 +61,18 @@ namespace Collections.Tasks {
         ///  "TextReader is the abstract base class of StreamReader and StringReader, which ..." => 
         ///   {"TextReader","is","the","abstract","base","class","of","StreamReader","and","StringReader","which",...}
         /// </example>
-        public static IEnumerable<string> Tokenize(TextReader reader) {
-            char[] delimeters = new[] { ',', ' ', '.', '\t', '\n' };
-            if (reader != null)
+        public static IEnumerable<string> Tokenize(TextReader reader)
+        {
+            var delimeters = new[] { ',', ' ', '.', '\t', '\n' };
+            if (reader == null)
+                throw new System.ArgumentNullException();
+            string line;
+            while ((line = reader.ReadLine()) != null)
             {
-                List<string> result = new List<string>();
-                string line;
-                while ((line = reader.ReadLine()) != null)
-                {
-                    result.AddRange(line.Split(delimeters, StringSplitOptions.RemoveEmptyEntries));
-                }
-                return result;
+                var word = line.Split(delimeters, StringSplitOptions.RemoveEmptyEntries);
+                foreach (string str in word)
+                    yield return str;
             }
-            else throw new System.ArgumentNullException();
         }
 
 
@@ -99,18 +102,16 @@ namespace Collections.Tasks {
         {
             if (root == null)
               throw new ArgumentNullException();
-            var result = new List<T>();
             var stack = new Stack<ITreeNode<T>>();
                 stack.Push(root);
                 while (stack.Count > 0)
                 {
                     var node = stack.Pop();
-                    result.Add(node.Data);
+                    yield return node.Data;
                 if (node.Children != null)
                     foreach(ITreeNode<T> nodeChildren in node.Children.Reverse())
                     stack.Push(nodeChildren);
                 }
-            return result;
         }
 
         /// <summary>
@@ -137,18 +138,16 @@ namespace Collections.Tasks {
         public static IEnumerable<T> WidthTraversalTree<T>(ITreeNode<T> root) {
             if (root == null)
                 throw new ArgumentNullException();
-            var result = new List<T>();
             var queue = new Queue<ITreeNode<T>>();
             queue.Enqueue(root);
             while (queue.Count > 0)
             {
                 var node = queue.Dequeue();
-                result.Add(node.Data);
+                yield return node.Data;
                 if (node.Children != null)
                     foreach (ITreeNode<T> nodeChildren in node.Children)
                         queue.Enqueue(nodeChildren);
             }
-            return result;
         }
 
 
@@ -170,45 +169,45 @@ namespace Collections.Tasks {
         ///   source = { 1,2,3,4 }, count=4 => {{1,2,3,4}}
         ///   source = { 1,2,3,4 }, count=5 => ArgumentOutOfRangeException
         /// </example>
-        public static IEnumerable<T[]> GenerateAllPermutations<T>(T[] source, int count) {
+        public static IEnumerable<T[]> GenerateAllPermutations<T>(T[] source, int count)
+        {
             if (source.Length < count || count < 0)
                 throw new ArgumentOutOfRangeException();
-            else
+            if (count != 0)
             {
-                List<T[]> result = new List<T[]>();
-                if(count!=0)
-                {
-                    int[] combination = new int[count];
-                    for (int i = 0; i < count; i++)
-                        combination[i] = i;
-                    T[] resultCombination = new T[count];
-                    for (int i = 0; i < count; i++)
-                        resultCombination[i] = source[combination[i]];
-                    result.Add(resultCombination);
-                    if(count<source.Length)
-                    {
-                        bool flag;
-                        do
-                        {
-                            flag = false;
-                            for (int i = count - 1; i >= 0; --i)
-                                if (combination[i] < source.Length - count + i)
-                                {
-                                    flag = true;
-                                    ++combination[i];
-                                    for (int j = i + 1; j < count; j++)
-                                        combination[j] = combination[j - 1] + 1;
-                                    resultCombination = new T[count];
-                                    for (int j = 0; j < count; ++j)
-                                        resultCombination[j] = source[combination[j]];
-                                    result.Add(resultCombination);
-                                    break;
-                                }
-                        } while (flag);
-                    }
+                int[] combination = new int[count];
+                for (int i = 0; i < count; i++)
+                    combination[i] = i;
 
+                T[] resultCombination = new T[count];
+                for (int i = 0; i < count; i++)
+                    resultCombination[i] = source[combination[i]];
+
+                yield return resultCombination;
+                if (count < source.Length)
+                {
+                    bool flag;
+                    do
+                    {
+                        flag = false;
+                        for (int i = count - 1; i >= 0; --i)
+                            if (combination[i] < source.Length - count + i)
+                            {
+                                flag = true;
+                                ++combination[i];
+                                for (int j = i + 1; j < count; j++)
+                                    combination[j] = combination[j - 1] + 1;
+
+                                resultCombination = new T[count];
+                                for (int j = 0; j < count; ++j)
+                                    resultCombination[j] = source[combination[j]];
+
+                                yield return resultCombination;
+                                break;
+                            }
+                    } while (flag);
                 }
-                return result;
+
             }
         }
 

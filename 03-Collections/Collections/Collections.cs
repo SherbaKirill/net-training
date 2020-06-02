@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace Collections.Tasks {
 
@@ -29,8 +30,19 @@ namespace Collections.Tasks {
         ///   12 => { 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144 }
         /// </example>
         public static IEnumerable<int> GetFibonacciSequence(int count) {
-            // TODO : Implement Fibonacci sequence generator
-            throw new NotImplementedException();
+            if (count >= 0)
+            {
+                List<int> result = new List<int>();
+                for (int item = 0; item < count; item++)
+                    if (item == 0)
+                        result.Add(1);
+                    else if (item == 1)
+                        result.Add(1);
+                    else
+                        result.Add(result[item - 2] + result[item - 1]);
+                return result;
+            }
+            else throw new ArgumentException();
         }
 
         /// <summary>
@@ -47,8 +59,17 @@ namespace Collections.Tasks {
         /// </example>
         public static IEnumerable<string> Tokenize(TextReader reader) {
             char[] delimeters = new[] { ',', ' ', '.', '\t', '\n' };
-            // TODO : Implement the tokenizer
-            throw new NotImplementedException();
+            if (reader != null)
+            {
+                List<string> result = new List<string>();
+                string line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    result.AddRange(line.Split(delimeters, StringSplitOptions.RemoveEmptyEntries));
+                }
+                return result;
+            }
+            else throw new System.ArgumentNullException();
         }
 
 
@@ -74,9 +95,22 @@ namespace Collections.Tasks {
         ///                   
         ///    result = { 1, 2, 3, 4, 5, 6, 7, 8 } 
         /// </example>
-        public static IEnumerable<T> DepthTraversalTree<T>(ITreeNode<T> root) {
-            // TODO : Implement the tree depth traversal algorithm
-            throw new NotImplementedException(); 
+        public static IEnumerable<T> DepthTraversalTree<T>(ITreeNode<T> root) 
+        {
+            if (root == null)
+              throw new ArgumentNullException();
+            var result = new List<T>();
+            var stack = new Stack<ITreeNode<T>>();
+                stack.Push(root);
+                while (stack.Count > 0)
+                {
+                    var node = stack.Pop();
+                    result.Add(node.Data);
+                if (node.Children != null)
+                    foreach(ITreeNode<T> nodeChildren in node.Children.Reverse())
+                    stack.Push(nodeChildren);
+                }
+            return result;
         }
 
         /// <summary>
@@ -101,8 +135,20 @@ namespace Collections.Tasks {
         ///    result = { 1, 2, 3, 4, 5, 6, 7, 8 } 
         /// </example>
         public static IEnumerable<T> WidthTraversalTree<T>(ITreeNode<T> root) {
-            // TODO : Implement the tree width traversal algorithm
-            throw new NotImplementedException();
+            if (root == null)
+                throw new ArgumentNullException();
+            var result = new List<T>();
+            var queue = new Queue<ITreeNode<T>>();
+            queue.Enqueue(root);
+            while (queue.Count > 0)
+            {
+                var node = queue.Dequeue();
+                result.Add(node.Data);
+                if (node.Children != null)
+                    foreach (ITreeNode<T> nodeChildren in node.Children)
+                        queue.Enqueue(nodeChildren);
+            }
+            return result;
         }
 
 
@@ -125,8 +171,45 @@ namespace Collections.Tasks {
         ///   source = { 1,2,3,4 }, count=5 => ArgumentOutOfRangeException
         /// </example>
         public static IEnumerable<T[]> GenerateAllPermutations<T>(T[] source, int count) {
-            // TODO : Implement GenerateAllPermutations method
-            throw new NotImplementedException();
+            if (source.Length < count || count < 0)
+                throw new ArgumentOutOfRangeException();
+            else
+            {
+                List<T[]> result = new List<T[]>();
+                if(count!=0)
+                {
+                    int[] combination = new int[count];
+                    for (int i = 0; i < count; i++)
+                        combination[i] = i;
+                    T[] resultCombination = new T[count];
+                    for (int i = 0; i < count; i++)
+                        resultCombination[i] = source[combination[i]];
+                    result.Add(resultCombination);
+                    if(count<source.Length)
+                    {
+                        bool flag;
+                        do
+                        {
+                            flag = false;
+                            for (int i = count - 1; i >= 0; --i)
+                                if (combination[i] < source.Length - count + i)
+                                {
+                                    flag = true;
+                                    ++combination[i];
+                                    for (int j = i + 1; j < count; j++)
+                                        combination[j] = combination[j - 1] + 1;
+                                    resultCombination = new T[count];
+                                    for (int j = 0; j < count; ++j)
+                                        resultCombination[j] = source[combination[j]];
+                                    result.Add(resultCombination);
+                                    break;
+                                }
+                        } while (flag);
+                    }
+
+                }
+                return result;
+            }
         }
 
     }
@@ -152,8 +235,9 @@ namespace Collections.Tasks {
         ///   Person cached = cache.GetOrBuildValue(10, ()=>LoadPersonById(10) );  // should get a Person from the cache
         /// </example>
         public static TValue GetOrBuildValue<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, Func<TValue> builder) {
-            // TODO : Implement GetOrBuildValue method for cache
-            throw new NotImplementedException();
+            if (!dictionary.ContainsKey(key))
+                dictionary.Add(key, builder.Invoke());
+            return dictionary[key];
         }
 
     }

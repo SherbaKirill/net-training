@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 
 namespace Collections.Tasks {
 
@@ -33,18 +34,13 @@ namespace Collections.Tasks {
             if (count < 0)
                 throw new ArgumentException();
             int first = 1;
-            int second = 1;
-            for (int item = 0; item < count; item++)
-            {                
-                if (item <= 1)
-                    yield return 1;
-                else
-                {
-                    int result = first + second;
-                    second = first;
-                    first = result;
-                    yield return result;                   
-                }
+            int second = 0;
+            for (int item = 1; item <= count; item++)
+            {
+                yield return first;
+                int result = first + second;
+                second = first;
+                first = result;                  
             }
                             
         }
@@ -69,9 +65,9 @@ namespace Collections.Tasks {
             string line;
             while ((line = reader.ReadLine()) != null)
             {
-                var word = line.Split(delimeters, StringSplitOptions.RemoveEmptyEntries);
-                foreach (string str in word)
-                    yield return str;
+                string[] words = line.Split(delimeters, StringSplitOptions.RemoveEmptyEntries);
+                foreach (string word in words)
+                    yield return word;
             }
         }
 
@@ -173,40 +169,31 @@ namespace Collections.Tasks {
         {
             if (source.Length < count || count < 0)
                 throw new ArgumentOutOfRangeException();
-            if (count != 0)
+
+            if (count == 0)
+                yield break;
+
+            Stack<T> res = new Stack<T>();
+            for (int i = 0; i < count; i++)
+               res.Push(source[i]);
+
+            T[] resultCombination = res.Reverse().ToArray();
+            yield return resultCombination;
+            res.Reverse();
+            if (count < source.Length)
             {
-                int[] combination = new int[count];
-                for (int i = 0; i < count; i++)
-                    combination[i] = i;
-
-                T[] resultCombination = new T[count];
-                for (int i = 0; i < count; i++)
-                    resultCombination[i] = source[combination[i]];
-
-                yield return resultCombination;
-                if (count < source.Length)
-                {
-                    bool flag;
-                    do
+                while (res.Count != 0)
+                    if (Array.IndexOf(source, res.Peek()) < source.Length - count + res.Count - 1)
                     {
-                        flag = false;
-                        for (int i = count - 1; i >= 0; --i)
-                            if (combination[i] < source.Length - count + i)
-                            {
-                                flag = true;
-                                ++combination[i];
-                                for (int j = i + 1; j < count; j++)
-                                    combination[j] = combination[j - 1] + 1;
-
-                                resultCombination = new T[count];
-                                for (int j = 0; j < count; ++j)
-                                    resultCombination[j] = source[combination[j]];
-
-                                yield return resultCombination;
-                                break;
-                            }
-                    } while (flag);
-                }
+                        T item = res.Pop();
+                        res.Push(source[Array.IndexOf(source, item) + 1]);
+                        for (int j = res.Count; j < count; j++)
+                            res.Push(source[Array.IndexOf(source, res.Peek()) + 1]);
+                        resultCombination = res.Reverse().ToArray();
+                        res.Reverse();
+                        yield return resultCombination;
+                    }
+                    else res.Pop();
 
             }
         }
